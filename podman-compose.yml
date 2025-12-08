@@ -1,0 +1,51 @@
+version: '3.8'
+
+services:
+  mysql:
+    container_name: mysql-container
+    image: docker.io/library/mysql:latest
+    restart: always
+
+    environment:
+      # Root password - change this in .env file
+      MYSQL_ROOT_PASSWORD: ${MYSQL_ROOT_PASSWORD:-rootpassword}
+
+      # Default database (one of them, both will be created via init script)
+      MYSQL_DATABASE: ${MYSQL_DATABASE:-slmdb}
+
+      # Application user credentials
+      MYSQL_USER: ${MYSQL_USER:-slm_user}
+      MYSQL_PASSWORD: ${MYSQL_PASSWORD:-slm_password}
+
+    ports:
+      # Expose MySQL on default port
+      - "3306:3306"
+
+    volumes:
+      # Persist MySQL data
+      - ./docker/mysql-data:/var/lib/mysql
+
+      # Mount initialization script to create both databases
+      # This script runs only on first startup (when mysql-data is empty)
+      - ./docker/init-db.sql:/docker-entrypoint-initdb.d/init-db.sql:ro
+
+    networks:
+      - slm-network
+
+    healthcheck:
+      test: ["CMD", "mysqladmin", "ping", "-h", "localhost", "-u", "root", "-p${MYSQL_ROOT_PASSWORD:-rootpassword}"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 30s
+
+networks:
+  slm-network:
+    driver: bridge
+
+# Usage:
+# 1. Copy .env.example to .env and configure passwords
+# 2. Run: podman-compose up -d
+# 3. Check logs: podman-compose logs -f mysql
+# 4. Stop: podman-compose down
+# 5. Remove volumes: podman-compose down -v
