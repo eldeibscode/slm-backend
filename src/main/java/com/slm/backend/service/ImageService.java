@@ -54,18 +54,17 @@ public class ImageService {
             : ".jpg";
         String filename = UUID.randomUUID().toString() + extension;
 
-        // Create upload directory if it doesn't exist
-        Path uploadPath = Paths.get(uploadDir);
-        if (!Files.exists(uploadPath)) {
-            Files.createDirectories(uploadPath);
-        }
+        // Create report-specific folder (using report ID as folder name)
+        String reportFolder = String.valueOf(reportId);
+        Path uploadPath = Paths.get(uploadDir, reportFolder);
+        Files.createDirectories(uploadPath);
 
-        // Save file
+        // Save file in report folder
         Path filePath = uploadPath.resolve(filename);
         Files.copy(file.getInputStream(), filePath, StandardCopyOption.REPLACE_EXISTING);
 
-        // Create image record
-        String imageUrl = urlPrefix + "/" + filename;
+        // Create image record with folder in URL
+        String imageUrl = urlPrefix + "/" + reportFolder + "/" + filename;
 
         ReportImage image = ReportImage.builder()
             .report(report)
@@ -92,16 +91,31 @@ public class ImageService {
             throw new IllegalArgumentException("Image does not belong to this report");
         }
 
-        // Delete file from disk
+        // Delete file from disk (handles both flat and nested paths)
         try {
-            String filename = image.getUrl().substring(image.getUrl().lastIndexOf("/") + 1);
-            Path filePath = Paths.get(uploadDir).resolve(filename);
+            String relativePath = image.getUrl().replace(urlPrefix + "/", "");
+            Path filePath = Paths.get(uploadDir).resolve(relativePath);
             Files.deleteIfExists(filePath);
         } catch (IOException e) {
             // Log error but continue with database deletion
         }
 
         reportImageRepository.delete(image);
+    }
+
+    public void softDeleteReportFolder(Long reportId) {
+        String reportFolder = String.valueOf(reportId);
+        String deletedFolder = "deleted-" + reportId;
+        Path sourcePath = Paths.get(uploadDir, reportFolder);
+        Path targetPath = Paths.get(uploadDir, deletedFolder);
+
+        try {
+            if (Files.exists(sourcePath)) {
+                Files.move(sourcePath, targetPath, StandardCopyOption.REPLACE_EXISTING);
+            }
+        } catch (IOException e) {
+            // Log error but don't fail the report deletion
+        }
     }
 
     @Transactional

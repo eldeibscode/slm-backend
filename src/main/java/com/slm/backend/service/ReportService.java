@@ -26,6 +26,7 @@ public class ReportService {
     private final TagRepository tagRepository;
     private final UserRepository userRepository;
     private final ReportImageRepository reportImageRepository;
+    private final ImageService imageService;
 
     @Transactional(readOnly = true)
     public ReportListResponse getReports(
@@ -194,6 +195,8 @@ public class ReportService {
         if (!reportRepository.existsById(id)) {
             throw new IllegalArgumentException("Report not found with id: " + id);
         }
+        // Soft-delete the report folder (rename to deleted-{id})
+        imageService.softDeleteReportFolder(id);
         reportRepository.deleteById(id);
     }
 

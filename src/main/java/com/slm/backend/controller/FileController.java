@@ -40,6 +40,36 @@ public class FileController {
         }
     }
 
+    @GetMapping("/{reportId}/{filename:.+}")
+    public ResponseEntity<Resource> serveReportFile(
+            @PathVariable Long reportId,
+            @PathVariable String filename) {
+        try {
+            Path basePath = Paths.get(uploadDir).normalize();
+            Path filePath = Paths.get(uploadDir, String.valueOf(reportId), filename).normalize();
+
+            // Path traversal protection
+            if (!filePath.startsWith(basePath)) {
+                return ResponseEntity.badRequest().build();
+            }
+
+            Resource resource = new UrlResource(filePath.toUri());
+
+            if (resource.exists() && resource.isReadable()) {
+                String contentType = determineContentType(filename);
+
+                return ResponseEntity.ok()
+                    .contentType(MediaType.parseMediaType(contentType))
+                    .header(HttpHeaders.CONTENT_DISPOSITION, "inline; filename=\"" + resource.getFilename() + "\"")
+                    .body(resource);
+            } else {
+                return ResponseEntity.notFound().build();
+            }
+        } catch (MalformedURLException e) {
+            return ResponseEntity.badRequest().build();
+        }
+    }
+
     private String determineContentType(String filename) {
         String extension = filename.substring(filename.lastIndexOf(".") + 1).toLowerCase();
         return switch (extension) {
