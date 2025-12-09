@@ -301,6 +301,24 @@ public class ReportService {
     }
 
     private ReportDto mapToDto(Report report) {
+        // Resolve featuredImage URL from featuredImageId if not directly set
+        String featuredImageUrl = report.getFeaturedImage();
+        if (featuredImageUrl == null && report.getFeaturedImageId() != null) {
+            // Look up the image URL from the images list
+            featuredImageUrl = report.getImages().stream()
+                .filter(img -> img.getId().equals(report.getFeaturedImageId()))
+                .map(ReportImage::getUrl)
+                .findFirst()
+                .orElse(null);
+        }
+        // If still no featured image but there are images, use the first one
+        if (featuredImageUrl == null && !report.getImages().isEmpty()) {
+            featuredImageUrl = report.getImages().stream()
+                .min(Comparator.comparingInt(ReportImage::getDisplayOrder))
+                .map(ReportImage::getUrl)
+                .orElse(null);
+        }
+
         return ReportDto.builder()
             .id(report.getId())
             .title(report.getTitle())
@@ -316,7 +334,7 @@ public class ReportService {
             .tags(report.getTags().stream().map(this::mapTagToDto).collect(Collectors.toList()))
             .images(report.getImages().stream().map(this::mapImageToDto).collect(Collectors.toList()))
             .viewCount(report.getViewCount())
-            .featuredImage(report.getFeaturedImage())
+            .featuredImage(featuredImageUrl)
             .featuredImageId(report.getFeaturedImageId())
             .build();
     }
