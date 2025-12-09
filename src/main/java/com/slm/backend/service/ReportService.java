@@ -66,7 +66,7 @@ public class ReportService {
         List<ReportDto> reports = reportPage.getContent().stream()
             .map(this::mapToDto)
             .collect(Collectors.toList());
-
+        System.out.println(reports);
         return ReportListResponse.builder()
             .reports(reports)
             .total(reportPage.getTotalElements())

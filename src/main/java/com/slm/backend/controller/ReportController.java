@@ -42,6 +42,7 @@ public class ReportController {
         ReportListResponse response = reportService.getReports(
             page, pageSize, search, categoryId, authorId, status, sortBy, sortOrder
         );
+        System.out.println(response);
         return ResponseEntity.ok(response);
     }
 
