@@ -48,3 +48,4 @@ docker/mysql-data/
 
 ### Backup Files ###
 *.backup
+/uploads/*
