@@ -1,6 +1,7 @@
 package com.slm.backend.controller;
 
-import org.springframework.beans.factory.annotation.Value;
+import com.slm.backend.config.UploadProperties;
+import lombok.RequiredArgsConstructor;
 import org.springframework.core.io.Resource;
 import org.springframework.core.io.UrlResource;
 import org.springframework.http.HttpHeaders;
@@ -10,19 +11,18 @@ import org.springframework.web.bind.annotation.*;
 
 import java.net.MalformedURLException;
 import java.nio.file.Path;
-import java.nio.file.Paths;
 
 @RestController
 @RequestMapping("/uploads")
+@RequiredArgsConstructor
 public class FileController {
 
-    @Value("${app.upload.base-dir:./}")
-    private String bassDir;
+    private final UploadProperties uploadProperties;
 
     @GetMapping("/{filename:.+}")
     public ResponseEntity<Resource> serveFile(@PathVariable String filename) {
         try {
-            Path filePath = Paths.get(bassDir).resolve(filename).normalize();
+            Path filePath = uploadProperties.getUploadPath().resolve(filename).normalize();
             Resource resource = new UrlResource(filePath.toUri());
 
             if (resource.exists() && resource.isReadable()) {
@@ -45,8 +45,8 @@ public class FileController {
             @PathVariable Long reportId,
             @PathVariable String filename) {
         try {
-            Path basePath = Paths.get(bassDir).normalize();
-            Path filePath = Paths.get(bassDir, String.valueOf(reportId), filename).normalize();
+            Path basePath = uploadProperties.getUploadPath().normalize();
+            Path filePath = uploadProperties.getReportUploadPath(reportId).resolve(filename).normalize();
 
             // Path traversal protection
             if (!filePath.startsWith(basePath)) {

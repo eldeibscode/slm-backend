@@ -1,12 +1,12 @@
 package com.slm.backend.service;
 
+import com.slm.backend.config.UploadProperties;
 import com.slm.backend.dto.report.ReportDto;
 import com.slm.backend.entity.Report;
 import com.slm.backend.entity.ReportImage;
 import com.slm.backend.repository.ReportImageRepository;
 import com.slm.backend.repository.ReportRepository;
 import lombok.RequiredArgsConstructor;
-import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.multipart.MultipartFile;
@@ -14,7 +14,6 @@ import org.springframework.web.multipart.MultipartFile;
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
-import java.nio.file.Paths;
 import java.nio.file.StandardCopyOption;
 import java.util.Map;
 import java.util.UUID;
@@ -25,15 +24,7 @@ public class ImageService {
 
     private final ReportRepository reportRepository;
     private final ReportImageRepository reportImageRepository;
-
-    @Value("${app.upload.base-dir:/reports}")
-    private String baseDir;
-
-    @Value("${app.upload.path:/uploads/reports}")
-    private String uploadPath;
-
-    @Value("${app.upload.url-prefix:http://localhost:3000/reports}")
-    private String urlPrefix;
+    private final UploadProperties uploadProperties;
 
     @Transactional
     public Map<String, Object> uploadImage(Long reportId, MultipartFile file, String alt, String caption) throws IOException {
@@ -57,17 +48,16 @@ public class ImageService {
             : ".jpg";
         String filename = UUID.randomUUID().toString() + extension;
 
-        // Create report-specific folder (using report ID as folder name)
-        String reportFolder = String.valueOf(reportId);
-        Path path = Paths.get(baseDir, this.uploadPath, reportFolder);
-        Files.createDirectories(path);
+        // Create report-specific folder
+        Path reportPath = uploadProperties.getReportUploadPath(reportId);
+        Files.createDirectories(reportPath);
 
         // Save file in report folder
-        Path filePath = path.resolve(filename);
+        Path filePath = reportPath.resolve(filename);
         Files.copy(file.getInputStream(), filePath, StandardCopyOption.REPLACE_EXISTING);
 
-        // Create image record with folder in URL
-        String imageUrl = urlPrefix + "/" + uploadPath + "/" + reportFolder + "/" + filename;
+        // Create image record with URL
+        String imageUrl = uploadProperties.getFileUrl(reportId, filename);
 
         ReportImage image = ReportImage.builder()
             .report(report)
@@ -94,10 +84,11 @@ public class ImageService {
             throw new IllegalArgumentException("Image does not belong to this report");
         }
 
-        // Delete file from disk (handles both flat and nested paths)
+        // Delete file from disk
         try {
-            String relativePath = image.getUrl().replace(urlPrefix + "/", "");
-            Path filePath = Paths.get(baseDir).resolve(relativePath);
+            String url = image.getUrl();
+            String filename = url.substring(url.lastIndexOf("/") + 1);
+            Path filePath = uploadProperties.getReportUploadPath(reportId).resolve(filename);
             Files.deleteIfExists(filePath);
         } catch (IOException e) {
             // Log error but continue with database deletion
@@ -107,10 +98,8 @@ public class ImageService {
     }
 
     public void softDeleteReportFolder(Long reportId) {
-        String reportFolder = String.valueOf(reportId);
-        String deletedFolder = "del-" + reportId;
-        Path sourcePath = Paths.get(baseDir, reportFolder);
-        Path targetPath = Paths.get(baseDir, deletedFolder);
+        Path sourcePath = uploadProperties.getReportUploadPath(reportId);
+        Path targetPath = uploadProperties.getUploadPath().resolve("del-" + reportId);
 
         try {
             if (Files.exists(sourcePath)) {
