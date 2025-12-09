@@ -16,7 +16,7 @@ import java.nio.file.Paths;
 @RequestMapping("/uploads")
 public class FileController {
 
-    @Value("${app.upload.dir:uploads}")
+    @Value("${app.upload.dir:/reports}")
     private String uploadDir;
 
     @GetMapping("/{filename:.+}")
@@ -40,7 +40,7 @@ public class FileController {
         }
     }
 
-    @GetMapping("/{reportId}/{filename:.+}")
+    @GetMapping("/reports/{reportId}/{filename:.+}")
     public ResponseEntity<Resource> serveReportFile(
             @PathVariable Long reportId,
             @PathVariable String filename) {

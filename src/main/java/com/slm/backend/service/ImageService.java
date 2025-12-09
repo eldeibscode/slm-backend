@@ -26,7 +26,7 @@ public class ImageService {
     private final ReportRepository reportRepository;
     private final ReportImageRepository reportImageRepository;
 
-    @Value("${app.upload.dir:uploads}")
+    @Value("${app.upload.dir:/reports}")
     private String uploadDir;
 
     @Value("${app.upload.url-prefix:http://localhost:3000/api/uploads}")
@@ -64,7 +64,7 @@ public class ImageService {
         Files.copy(file.getInputStream(), filePath, StandardCopyOption.REPLACE_EXISTING);
 
         // Create image record with folder in URL
-        String imageUrl = urlPrefix + "/" + reportFolder + "/" + filename;
+        String imageUrl = urlPrefix + uploadDir + "/" + reportFolder + "/" + filename;
 
         ReportImage image = ReportImage.builder()
             .report(report)
@@ -105,7 +105,7 @@ public class ImageService {
 
     public void softDeleteReportFolder(Long reportId) {
         String reportFolder = String.valueOf(reportId);
-        String deletedFolder = "deleted-" + reportId;
+        String deletedFolder = "del-" + reportId;
         Path sourcePath = Paths.get(uploadDir, reportFolder);
         Path targetPath = Paths.get(uploadDir, deletedFolder);
 
