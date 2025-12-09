@@ -16,13 +16,13 @@ import java.nio.file.Paths;
 @RequestMapping("/uploads")
 public class FileController {
 
-    @Value("${app.upload.dir:/reports}")
-    private String uploadDir;
+    @Value("${app.upload.base-dir:./}")
+    private String bassDir;
 
     @GetMapping("/{filename:.+}")
     public ResponseEntity<Resource> serveFile(@PathVariable String filename) {
         try {
-            Path filePath = Paths.get(uploadDir).resolve(filename).normalize();
+            Path filePath = Paths.get(bassDir).resolve(filename).normalize();
             Resource resource = new UrlResource(filePath.toUri());
 
             if (resource.exists() && resource.isReadable()) {
@@ -45,8 +45,8 @@ public class FileController {
             @PathVariable Long reportId,
             @PathVariable String filename) {
         try {
-            Path basePath = Paths.get(uploadDir).normalize();
-            Path filePath = Paths.get(uploadDir, String.valueOf(reportId), filename).normalize();
+            Path basePath = Paths.get(bassDir).normalize();
+            Path filePath = Paths.get(bassDir, String.valueOf(reportId), filename).normalize();
 
             // Path traversal protection
             if (!filePath.startsWith(basePath)) {

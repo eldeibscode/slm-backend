@@ -26,10 +26,13 @@ public class ImageService {
     private final ReportRepository reportRepository;
     private final ReportImageRepository reportImageRepository;
 
-    @Value("${app.upload.dir:/reports}")
-    private String uploadDir;
+    @Value("${app.upload.base-dir:/reports}")
+    private String baseDir;
 
-    @Value("${app.upload.url-prefix:http://localhost:3000/api/uploads}")
+    @Value("${app.upload.path:/uploads/reports}")
+    private String uploadPath;
+
+    @Value("${app.upload.url-prefix:http://localhost:3000/reports}")
     private String urlPrefix;
 
     @Transactional
@@ -56,15 +59,15 @@ public class ImageService {
 
         // Create report-specific folder (using report ID as folder name)
         String reportFolder = String.valueOf(reportId);
-        Path uploadPath = Paths.get(uploadDir, reportFolder);
-        Files.createDirectories(uploadPath);
+        Path path = Paths.get(baseDir, this.uploadPath, reportFolder);
+        Files.createDirectories(path);
 
         // Save file in report folder
-        Path filePath = uploadPath.resolve(filename);
+        Path filePath = path.resolve(filename);
         Files.copy(file.getInputStream(), filePath, StandardCopyOption.REPLACE_EXISTING);
 
         // Create image record with folder in URL
-        String imageUrl = urlPrefix + uploadDir + "/" + reportFolder + "/" + filename;
+        String imageUrl = urlPrefix + "/" + uploadPath + "/" + reportFolder + "/" + filename;
 
         ReportImage image = ReportImage.builder()
             .report(report)
@@ -94,7 +97,7 @@ public class ImageService {
         // Delete file from disk (handles both flat and nested paths)
         try {
             String relativePath = image.getUrl().replace(urlPrefix + "/", "");
-            Path filePath = Paths.get(uploadDir).resolve(relativePath);
+            Path filePath = Paths.get(baseDir).resolve(relativePath);
             Files.deleteIfExists(filePath);
         } catch (IOException e) {
             // Log error but continue with database deletion
@@ -106,8 +109,8 @@ public class ImageService {
     public void softDeleteReportFolder(Long reportId) {
         String reportFolder = String.valueOf(reportId);
         String deletedFolder = "del-" + reportId;
-        Path sourcePath = Paths.get(uploadDir, reportFolder);
-        Path targetPath = Paths.get(uploadDir, deletedFolder);
+        Path sourcePath = Paths.get(baseDir, reportFolder);
+        Path targetPath = Paths.get(baseDir, deletedFolder);
 
         try {
             if (Files.exists(sourcePath)) {
