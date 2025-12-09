@@ -36,6 +36,9 @@ public class ReportService {
             Long categoryId,
             Long authorId,
             String status,
+            List<Long> tagIds,
+            LocalDateTime dateFrom,
+            LocalDateTime dateTo,
             String sortBy,
             String sortOrder
     ) {
@@ -56,18 +59,24 @@ public class ReportService {
             }
         }
 
+        // Convert empty tagIds list to null for query
+        List<Long> effectiveTagIds = (tagIds != null && !tagIds.isEmpty()) ? tagIds : null;
+
         Page<Report> reportPage = reportRepository.findWithFilters(
             reportStatus,
             categoryId,
             authorId,
             search,
+            effectiveTagIds,
+            dateFrom,
+            dateTo,
             pageable
         );
 
         List<ReportDto> reports = reportPage.getContent().stream()
             .map(this::mapToDto)
             .collect(Collectors.toList());
-        System.out.println(reports);
+
         return ReportListResponse.builder()
             .reports(reports)
             .total(reportPage.getTotalElements())
@@ -262,7 +271,7 @@ public class ReportService {
                 .orElseThrow(() -> new IllegalArgumentException("User not found"));
             authorId = user.getId();
         }
-        return getReports(page, pageSize, search, null, authorId, status, sortBy, sortOrder);
+        return getReports(page, pageSize, search, null, authorId, status, null, null, null, sortBy, sortOrder);
     }
 
     private Report.Status parseStatus(String status) {

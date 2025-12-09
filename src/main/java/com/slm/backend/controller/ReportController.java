@@ -36,13 +36,25 @@ public class ReportController {
             @RequestParam(required = false) Long categoryId,
             @RequestParam(required = false) Long authorId,
             @RequestParam(required = false) String status,
+            @RequestParam(required = false) List<Long> tagIds,
+            @RequestParam(required = false) String dateFrom,
+            @RequestParam(required = false) String dateTo,
             @RequestParam(required = false, defaultValue = "createdAt") String sortBy,
             @RequestParam(required = false, defaultValue = "desc") String sortOrder
     ) {
+        // Parse date strings to LocalDateTime
+        java.time.LocalDateTime dateFromParsed = null;
+        java.time.LocalDateTime dateToParsed = null;
+        if (dateFrom != null && !dateFrom.isEmpty()) {
+            dateFromParsed = java.time.LocalDate.parse(dateFrom).atStartOfDay();
+        }
+        if (dateTo != null && !dateTo.isEmpty()) {
+            dateToParsed = java.time.LocalDate.parse(dateTo).atTime(23, 59, 59);
+        }
+
         ReportListResponse response = reportService.getReports(
-            page, pageSize, search, categoryId, authorId, status, sortBy, sortOrder
+            page, pageSize, search, categoryId, authorId, status, tagIds, dateFromParsed, dateToParsed, sortBy, sortOrder
         );
-        System.out.println(response);
         return ResponseEntity.ok(response);
     }
 
