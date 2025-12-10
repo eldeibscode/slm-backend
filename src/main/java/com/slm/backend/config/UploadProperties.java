@@ -3,6 +3,7 @@ package com.slm.backend.config;
 import jakarta.annotation.PostConstruct;
 import lombok.Getter;
 import lombok.Setter;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.boot.context.properties.ConfigurationProperties;
 
 import java.io.IOException;
@@ -14,6 +15,9 @@ import java.nio.file.Paths;
 @Setter
 @ConfigurationProperties(prefix = "app.upload")
 public class UploadProperties {
+
+    @Value("${server.servlet.context-path:/api}")
+    private String contextPath;
 
     /**
      * Base directory for file storage (e.g., "./" for project root)
@@ -49,11 +53,11 @@ public class UploadProperties {
 
     /**
      * Returns the full URL for an uploaded file.
-     * Format: {urlPrefix}/api/uploads/reports/{reportId}/{filename}
-     * .g., "http://localhost:3000/api/uploads/reports/1/image.jpg"
+     * Format: {urlPrefix}{contextPath}/{path}{reportId}/{filename}
+     * e.g., "http://localhost:3000/api/uploads/reports/1/image.jpg"
      */
     public String getFileUrl(Long reportId, String filename) {
-        return String.format("%s/api/%s%d/%s", urlPrefix, path, reportId, filename);
+        return String.format("%s%s/%s%d/%s", urlPrefix, contextPath, path, reportId, filename);
     }
 
     /**
