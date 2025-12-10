@@ -33,6 +33,7 @@ public class UploadProperties {
     /**
      * Returns the full filesystem path for uploads.
      * Combines baseDir and path.
+     * .g., "./uploads/reports/"
      */
     public Path getUploadPath() {
         return Paths.get(baseDir, path).normalize();
@@ -40,6 +41,7 @@ public class UploadProperties {
 
     /**
      * Returns the full filesystem path for a specific report's uploads.
+     * .e., "./uploads/reports/{reportId}/"
      */
     public Path getReportUploadPath(Long reportId) {
         return getUploadPath().resolve(String.valueOf(reportId));
@@ -48,9 +50,10 @@ public class UploadProperties {
     /**
      * Returns the full URL for an uploaded file.
      * Format: {urlPrefix}/api/uploads/reports/{reportId}/{filename}
+     * .g., "http://localhost:3000/api/uploads/reports/1/image.jpg"
      */
     public String getFileUrl(Long reportId, String filename) {
-        return String.format("%s/api/uploads/reports/%d/%s", urlPrefix, reportId, filename);
+        return String.format("%s/api/%s%d/%s", urlPrefix, path, reportId, filename);
     }
 
     /**
