@@ -1,0 +1,64 @@
+# Git files
+.git
+.gitignore
+.gitattributes
+
+# IDE files
+.idea
+.vscode
+*.iml
+*.iws
+*.ipr
+.project
+.classpath
+.settings
+*.swp
+*.swo
+*~
+
+# Build directories
+build/
+target/
+out/
+bin/
+.gradle/
+!gradle/wrapper/gradle-wrapper.jar
+
+# Testing
+test-results/
+coverage/
+
+# OS files
+.DS_Store
+Thumbs.db
+
+# Logs
+*.log
+logs/
+
+# Environment files
+.env
+.env.local
+.env.*.local
+
+# Docker files (not needed in image)
+Dockerfile
+docker-compose*.yml
+podman-compose.yml
+.dockerignore
+
+# Documentation
+README.md
+CHANGELOG.md
+docs/
+
+# Database data
+docker/
+*.sql
+
+# Uploads (will be mounted as volume)
+uploads/
+
+# Temporary files
+*.tmp
+*.temp

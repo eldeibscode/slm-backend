@@ -1,0 +1,100 @@
+version: '3.8'
+
+services:
+  # MySQL Database Service
+  mysql:
+    container_name: slm-mysql
+    image: mysql:8.0
+    restart: unless-stopped
+
+    environment:
+      MYSQL_ROOT_PASSWORD: ${MYSQL_ROOT_PASSWORD:-rootpassword}
+      MYSQL_DATABASE: ${MYSQL_DATABASE:-slmdb}
+      MYSQL_USER: ${MYSQL_USER:-slm_user}
+      MYSQL_PASSWORD: ${MYSQL_PASSWORD:-slm_password}
+
+    ports:
+      - "3306:3306"
+
+    volumes:
+      # Persist MySQL data
+      - mysql-data:/var/lib/mysql
+      # Uncomment if you have init scripts
+      # - ./docker/init-db.sql:/docker-entrypoint-initdb.d/init-db.sql:ro
+
+    networks:
+      - slm-network
+
+    healthcheck:
+      test: ["CMD", "mysqladmin", "ping", "-h", "localhost", "-u", "root", "-p${MYSQL_ROOT_PASSWORD:-rootpassword}"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 30s
+
+  # Spring Boot Application Service
+  backend:
+    container_name: slm-backend
+    build:
+      context: .
+      dockerfile: Dockerfile
+    restart: unless-stopped
+
+    environment:
+      # Spring Profile
+      SPRING_PROFILES_ACTIVE: prod
+
+      # Database Configuration
+      SPRING_DATASOURCE_URL: jdbc:mysql://mysql:3306/${MYSQL_DATABASE:-slmdb}?useSSL=false&allowPublicKeyRetrieval=true&serverTimezone=UTC
+      SPRING_DATASOURCE_USERNAME: ${MYSQL_USER:-slm_user}
+      SPRING_DATASOURCE_PASSWORD: ${MYSQL_PASSWORD:-slm_password}
+
+      # JWT Configuration
+      JWT_SECRET: ${JWT_SECRET:-your-very-secure-secret-key-that-is-at-least-256-bits-long-for-hs256-algorithm-please-change-this-in-production}
+      JWT_EXPIRATION: ${JWT_EXPIRATION:-86400000}
+
+      # File Upload Configuration
+      APP_UPLOAD_BASE_DIR: /app/uploads
+      APP_UPLOAD_PATH: reports/
+      APP_UPLOAD_URL_PREFIX: ${APP_UPLOAD_URL_PREFIX:-http://localhost:3000}
+
+      # Server Configuration
+      SERVER_PORT: 3000
+
+    ports:
+      - "3000:3000"
+
+    volumes:
+      # Persist uploaded files
+      - upload-data:/app/uploads
+
+    networks:
+      - slm-network
+
+    depends_on:
+      mysql:
+        condition: service_healthy
+
+    healthcheck:
+      test: ["CMD", "wget", "--quiet", "--tries=1", "--spider", "http://localhost:3000/api/actuator/health", "||", "exit", "1"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 60s
+
+networks:
+  slm-network:
+    driver: bridge
+
+volumes:
+  mysql-data:
+    driver: local
+  upload-data:
+    driver: local
+
+# Usage Instructions:
+# 1. Create a .env file with your environment variables (see .env.example)
+# 2. Build and start: docker-compose up -d
+# 3. View logs: docker-compose logs -f backend
+# 4. Stop services: docker-compose down
+# 5. Remove volumes (WARNING - deletes data): docker-compose down -v
