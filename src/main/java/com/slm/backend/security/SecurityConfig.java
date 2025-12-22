@@ -77,7 +77,14 @@ public class SecurityConfig {
     @Bean
     public CorsConfigurationSource corsConfigurationSource() {
         CorsConfiguration configuration = new CorsConfiguration();
-        configuration.setAllowedOrigins(List.of("http://localhost:4200", "http://localhost:3000", "http://localhost:5173"));
+        // Allow localhost for development and production domain for Hostinger
+        configuration.setAllowedOrigins(List.of(
+            "http://localhost:4200",
+            "http://localhost:3000",
+            "http://localhost:5173",
+            "https://biedle.com",
+            "http://biedle.com"
+        ));
         configuration.setAllowedMethods(List.of("GET", "POST", "PUT", "PATCH", "DELETE", "OPTIONS"));
         configuration.setAllowedHeaders(List.of("*"));
         configuration.setAllowCredentials(true);
