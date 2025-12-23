@@ -37,7 +37,9 @@ public class WebConfig implements WebMvcConfigurer {
     public void addResourceHandlers(ResourceHandlerRegistry registry) {
         // Serve uploaded images
         // Pattern: /uploads/reports/** maps to file system location
-        String resourceLocation = "file:" + uploadBaseDir + uploadPath;
+        // Ensure proper path separator between baseDir and path
+        String separator = uploadBaseDir.endsWith("/") || uploadPath.startsWith("/") ? "" : "/";
+        String resourceLocation = "file:" + uploadBaseDir + separator + uploadPath;
 
         registry.addResourceHandler("/uploads/reports/**")
                 .addResourceLocations(resourceLocation)
