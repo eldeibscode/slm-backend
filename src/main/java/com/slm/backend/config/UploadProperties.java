@@ -27,7 +27,7 @@ public class UploadProperties {
     /**
      * Relative path within base directory for uploads (e.g., "uploads/reports/")
      */
-    private String path = "uploads/reports/";
+    private String path = "/uploads/reports/";
 
     /**
      * URL prefix for serving uploaded files (e.g., "http://localhost:3000")

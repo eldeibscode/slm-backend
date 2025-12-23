@@ -44,9 +44,18 @@ public class FileController {
     public ResponseEntity<Resource> serveReportFile(
             @PathVariable Long reportId,
             @PathVariable String filename) {
+        System.out.println("=== FileController.serveReportFile called ===");
+        System.out.println("reportId: " + reportId);
+        System.out.println("filename: " + filename);
+
         try {
             Path basePath = uploadProperties.getUploadPath().normalize();
             Path filePath = uploadProperties.getReportUploadPath(reportId).resolve(filename).normalize();
+
+            System.out.println("basePath: " + basePath);
+            System.out.println("filePath: " + filePath);
+            System.out.println("file exists: " + java.nio.file.Files.exists(filePath));
+            System.out.println("file readable: " + java.nio.file.Files.isReadable(filePath));
 
             // Path traversal protection
             if (!filePath.startsWith(basePath)) {
