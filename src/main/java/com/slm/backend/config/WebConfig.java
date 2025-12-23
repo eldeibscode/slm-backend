@@ -3,6 +3,7 @@ package com.slm.backend.config;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.web.servlet.config.annotation.CorsRegistry;
+import org.springframework.web.servlet.config.annotation.ResourceHandlerRegistry;
 import org.springframework.web.servlet.config.annotation.WebMvcConfigurer;
 
 import java.util.Arrays;
@@ -12,6 +13,12 @@ public class WebConfig implements WebMvcConfigurer {
 
     @Value("${cors.allowed-origins:http://localhost:4200,http://localhost:3000,http://localhost:5173}")
     private String allowedOrigins;
+
+    @Value("${app.upload.base-dir:./}")
+    private String uploadBaseDir;
+
+    @Value("${app.upload.path:uploads/reports/}")
+    private String uploadPath;
 
     @Override
     public void addCorsMappings(CorsRegistry registry) {
@@ -24,5 +31,16 @@ public class WebConfig implements WebMvcConfigurer {
                 .allowedHeaders("*")
                 .allowCredentials(true)
                 .maxAge(3600); // Cache preflight requests for 1 hour
+    }
+
+    @Override
+    public void addResourceHandlers(ResourceHandlerRegistry registry) {
+        // Serve uploaded images
+        // Pattern: /uploads/reports/** maps to file system location
+        String resourceLocation = "file:" + uploadBaseDir + uploadPath;
+
+        registry.addResourceHandler("/uploads/reports/**")
+                .addResourceLocations(resourceLocation)
+                .setCachePeriod(3600); // Cache for 1 hour
     }
 }
