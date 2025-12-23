@@ -35,11 +35,27 @@ public class WebConfig implements WebMvcConfigurer {
 
     @Override
     public void addResourceHandlers(ResourceHandlerRegistry registry) {
-        // Serve uploaded images
-        // Pattern: /uploads/reports/** maps to file system location
-        // Ensure proper path separator between baseDir and path
-        String separator = uploadBaseDir.endsWith("/") || uploadPath.startsWith("/") ? "" : "/";
-        String resourceLocation = "file:" + uploadBaseDir + separator + uploadPath;
+        // Serve uploaded images from /app/uploads/reports/
+        // Docker config: APP_UPLOAD_BASE_DIR=/app/uploads, APP_UPLOAD_PATH=reports/
+        // Pattern: /uploads/reports/** maps to file:/app/uploads/reports/
+
+        // Build the full path, ensuring proper separators and trailing slash
+        String fullPath = uploadBaseDir;
+        if (!fullPath.endsWith("/")) {
+            fullPath += "/";
+        }
+        fullPath += uploadPath;
+        if (!fullPath.endsWith("/")) {
+            fullPath += "/";
+        }
+
+        String resourceLocation = "file:" + fullPath;
+
+        System.out.println("=== Resource Handler Configuration ===");
+        System.out.println("uploadBaseDir: " + uploadBaseDir);
+        System.out.println("uploadPath: " + uploadPath);
+        System.out.println("resourceLocation: " + resourceLocation);
+        System.out.println("=====================================");
 
         registry.addResourceHandler("/uploads/reports/**")
                 .addResourceLocations(resourceLocation)
